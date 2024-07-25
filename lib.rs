@@ -30,13 +30,22 @@ pub mod flipper {
             Self::new(Default::default())
         }
 
-        /// Creates a new flipper smart contract with the value being psd-random using provided seed.
+        /// Creates a new flipper smart contract with the value being calculate using provided seed.
         #[ink(constructor)]
-        pub fn random_with_seed(seed: Hash) -> Self {
-            let seed: [u8; 32] = seed.try_into().unwrap();
-            let sum: u32 = seed.iter().map(|&b| b as u32).sum();
+        pub fn based_on_seed(seed: Hash) -> Self {
+            let value = seed_to_value(seed);
 
-            Self { value: sum % 2 == 0 }
+            Self { value }
+        }
+
+        /// Flips the current value, value based on seed.
+        #[ink(message)]
+        pub fn flip_with_seed(&mut self, seed: Hash) {
+            let new_value = seed_to_value(seed);
+
+            self.value = new_value;
+
+            self.env().emit_event(Flipped { old: !self.value, new: new_value })
         }
 
         /// Flips the current value of the Flipper's boolean.
@@ -52,6 +61,14 @@ pub mod flipper {
         pub fn get(&self) -> bool {
             self.value
         }
+
+    }
+
+    fn seed_to_value(seed: Hash) -> bool {
+        let seed: [u8; 32] = seed.try_into().unwrap();
+        let sum: u32 = seed.iter().map(|&b| b as u32).sum();
+
+        sum % 2 == 0
     }
 
     #[cfg(test)]
