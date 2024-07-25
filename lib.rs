@@ -2,6 +2,7 @@
 
 #[ink::contract]
 pub mod flipper {
+
     #[ink(event)]
     /// Emitted when the flip function is called.
     pub struct Flipped {
@@ -27,6 +28,15 @@ pub mod flipper {
         #[ink(constructor)]
         pub fn new_default() -> Self {
             Self::new(Default::default())
+        }
+
+        /// Creates a new flipper smart contract with the value being psd-random using provided seed.
+        #[ink(constructor)]
+        pub fn random_with_seed(seed: Hash) -> Self {
+            let seed: [u8; 32] = seed.try_into().unwrap();
+            let sum: u32 = seed.iter().map(|&b| b as u32).sum();
+
+            Self { value: sum % 2 == 0 }
         }
 
         /// Flips the current value of the Flipper's boolean.
