@@ -1,16 +1,18 @@
 [package]
 name = "flipper"
-version = "5.0.0"
+version = "4.0.0"
 authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2021"
 publish = false
 
 [dependencies]
-ink = { version = "5.0.0", default-features = false }
+ink = { version = "4.0", default-features = false }
+
+scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+scale-info = { version = "2.3", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
-ink_e2e = { version = "5.0.0" }
-hex = { version = "0.4.3" }
+ink_e2e = { version = "4.0" }
 
 [lib]
 path = "lib.rs"
@@ -19,6 +21,8 @@ path = "lib.rs"
 default = ["std"]
 std = [
     "ink/std",
+    "scale/std",
+    "scale-info/std",
 ]
 ink-as-dependency = []
 e2e-tests = []

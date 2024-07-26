@@ -2,7 +2,6 @@
 
 #[ink::contract]
 pub mod flipper {
-
     #[ink(event)]
     /// Emitted when the flip function is called.
     pub struct Flipped {
@@ -65,7 +64,7 @@ pub mod flipper {
     }
 
     fn seed_to_value(seed: Hash) -> bool {
-        let seed: [u8; 32] = seed.try_into().unwrap();
+        let seed: &[u8] = seed.as_ref();
         let sum: u32 = seed.iter().map(|&b| b as u32).sum();
 
         sum % 2 == 0
