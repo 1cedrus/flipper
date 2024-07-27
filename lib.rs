@@ -2,6 +2,14 @@
 
 #[ink::contract]
 pub mod flipper {
+    use crate::ensure;
+
+    #[derive(Debug, scale::Decode, scale::Encode)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    pub enum FlipperError {
+        ZeroSum
+    }
+
     #[ink(event)]
     /// Emitted when the flip function is called.
     pub struct Flipped {
@@ -31,20 +39,21 @@ pub mod flipper {
 
         /// Creates a new flipper smart contract with the value being calculate using provided seed.
         #[ink(constructor)]
-        pub fn based_on_seed(seed: Hash) -> Self {
-            let value = seed_to_value(seed);
+        pub fn from_seed(seed: Hash) -> Result<Self, FlipperError>{
+            let value = seed_to_value(seed)?;
 
-            Self { value }
+            Ok(Self { value })
         }
 
         /// Flips the current value, value based on seed.
         #[ink(message)]
-        pub fn flip_with_seed(&mut self, seed: Hash) {
-            let new_value = seed_to_value(seed);
+        pub fn flip_with_seed(&mut self, seed: Hash) -> Result<bool, FlipperError> {
+            let new_value = seed_to_value(seed)?;
 
             self.value = new_value;
+            self.env().emit_event(Flipped { old: !self.value, new: new_value });
 
-            self.env().emit_event(Flipped { old: !self.value, new: new_value })
+            Ok(new_value)
         }
 
         /// Flips the current value of the Flipper's boolean.
@@ -63,11 +72,13 @@ pub mod flipper {
 
     }
 
-    fn seed_to_value(seed: Hash) -> bool {
+    fn seed_to_value(seed: Hash) -> Result<bool, FlipperError> {
         let seed: &[u8] = seed.as_ref();
         let sum: u32 = seed.iter().map(|&b| b as u32).sum();
 
-        sum % 2 == 0
+        ensure!(sum != 0, FlipperError::ZeroSum);
+
+        Ok(sum % 2 == 0)
     }
 
     #[cfg(test)]
@@ -199,3 +210,14 @@ pub mod flipper {
         }
     }
 }
+
+/// Ref: https://github.com/InkSmartContract/BlockchainFoodOrder/blob/main/contracts/foodorder/logic/helpers/helpers.rs
+#[macro_export]
+macro_rules! ensure {
+    ( $x:expr, $y:expr $(,)? ) => {{
+        if !$x {
+            return Err($y.into());
+        }
+    }};
+}
+
